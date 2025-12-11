@@ -22,14 +22,24 @@ RUN npm run build
 # ===================================
 FROM nginx:alpine
 
-# Nginx 설정 파일 복사
-COPY nginx.conf /etc/nginx/nginx.conf
+# envsubst를 위한 gettext 설치
+RUN apk add --no-cache gettext
+
+# Nginx 설정 템플릿 복사
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
 
 # 빌드된 파일을 Nginx로 복사
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# 포트 노출
-EXPOSE 80
+# 시작 스크립트 생성
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'export PORT=${PORT:-8080}' >> /start.sh && \
+    echo 'envsubst "\$PORT" < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /start.sh && \
+    echo 'nginx -g "daemon off;"' >> /start.sh && \
+    chmod +x /start.sh
 
-# Nginx 실행
-CMD ["nginx", "-g", "daemon off;"]
+# 포트 노출 (환경 변수로 설정 가능)
+EXPOSE 8080
+
+# 시작 스크립트 실행
+CMD ["/start.sh"]
