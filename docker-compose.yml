@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  prisma-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prisma-frontend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - prisma-network
+
+networks:
+  prisma-network:
+    driver: bridge
